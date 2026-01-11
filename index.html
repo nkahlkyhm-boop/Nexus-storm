@@ -3,254 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipe Nexus</title>
-    <!-- Fontes e Ícones necessários para a identidade visual -->
+    <title>Equipe Nexus - Monitoramento</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden;">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- Modal de Permissão Inicial -->
-    <div id="permission-modal" style="display: flex; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.95); align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); padding: 40px; border-radius: 20px; max-width: 400px; w-full; text-align: center; border: 1px solid rgba(220, 38, 38, 0.5);">
-            <i class="fas fa-location-dot" style="color: #dc2626; font-size: 50px; margin-bottom: 24px;"></i>
-            <h2 style="font-family: Arial, sans-serif; font-weight: bold; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">Acesso Necessário</h2>
-            <p id="modal-text" style="color: #cbd5e1; margin-bottom: 32px; font-size: 14px; line-height: 1.6;">
-                Para o correto funcionamento do Radar Nexus, é obrigatório permitir o acesso ao seu GPS real.
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        #permission-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.98);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #dc2626;
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.2);
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 24px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: #dc2626;
+        }
+
+        .hero {
+            padding: 150px 20px 80px;
+            text-align: center;
+            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), 
+                        url('https://images.unsplash.com/photo-1527482797697-8795b05a13fe?auto=format&fit=crop&q=80&w=1920') center/cover;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: clamp(40px, 8vw, 70px);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .btn-red {
+            background: #dc2626;
+            color: white;
+            padding: 18px 35px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-red:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+
+        #status-bar {
+            display: none;
+            margin-bottom: 30px;
+            background: #020617;
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: 1px solid #dc2626;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(220, 38, 38, 0.3);
+            border-top: 3px solid #dc2626;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .radar-section {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .radar-container {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            height: 600px;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+        }
+
+        footer {
+            padding: 60px 20px;
+            text-align: center;
+            background: #020617;
+            border-top: 1px solid #334155;
+        }
+
+        .pix-box {
+            display: none;
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #dc2626;
+            width: 280px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 1100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="permission-modal">
+        <div class="modal-content">
+            <i class="fas fa-satellite-dish" style="font-size: 50px; color: #dc2626; margin-bottom: 20px;"></i>
+            <h2 style="margin-bottom: 15px;">CONEXÃO REQUERIDA</h2>
+            <p style="margin-bottom: 25px; color: #94a3b8;">
+                Para iniciar o monitoramento tático, o sistema Nexus precisa sincronizar com o GPS do seu dispositivo.
             </p>
-            <div id="modal-actions">
-                <button onclick="activateRealMonitoring()" style="width: 100%; background: #dc2626; color: white; border: none; font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <i class="fas fa-crosshairs"></i> ATIVAR GPS REAL
+            <div id="modal-btn-area">
+                <button onclick="startNexus()" class="btn-red" style="width: 100%;">
+                    AUTORIZAR GPS
                 </button>
             </div>
-            <p style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-top: 20px; font-weight: bold;">Protocolo de Geomonitorização</p>
         </div>
     </div>
 
-    <!-- Navbar -->
-    <nav style="position: fixed; width: 100%; z-index: 500; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 80px;">
-            <div style="display: flex; flex-direction: column;">
-                <span style="font-weight: bold; font-size: 20px; letter-spacing: -1px;">EQUIPE <span style="color: #dc2626;">NEXUS</span></span>
-                <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; font-weight: bold;">Vigilância Total</span>
-            </div>
-
-            <div style="position: relative;">
-                <button onclick="toggleDonate()" style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-hand-holding-heart"></i> APOIAR
-                </button>
-                
-                <div id="donate-dropdown" style="display: none; position: absolute; right: 0; mt: 12px; width: 280px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
-                    <p style="font-size: 12px; font-weight: bold; color: #ef4444; text-transform: uppercase; margin-bottom: 12px; text-align: center;">Doação PIX</p>
-                    <div onclick="copyPix()" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; cursor: pointer;">
-                        <p style="font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 900; margin: 0 0 4px 0;">Chave Telemóvel:</p>
-                        <p id="pix-value" style="font-size: 14px; font-family: monospace; font-weight: bold; color: white; letter-spacing: 2px; margin: 0;">16999792460</p>
-                    </div>
-                    <button onclick="copyPix()" id="btn-copy" style="width: 100%; background: #dc2626; color: white; border: none; font-weight: bold; padding: 10px; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-size: 12px;">
-                        Copiar Chave
-                    </button>
-                </div>
-            </div>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">EQUIPE <span>NEXUS</span></div>
+            <button onclick="togglePix()" class="btn-red" style="padding: 10px 20px; font-size: 14px;">
+                <i class="fas fa-heart"></i> APOIAR
+            </button>
         </div>
     </nav>
 
-    <!-- Hero -->
-    <section style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 80px; text-align: center; background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1527482797697-8795b05a13fe?auto=format&fit=crop&q=80&w=1920'); background-size: cover; background-position: center;">
-        <div style="max-width: 1000px; padding: 0 20px;">
-            
-            <!-- Barra de Status Dinâmica -->
-            <div id="status-bar" style="display: none; flex-direction: row; align-items: center; gap: 16px; padding: 16px 24px; border-radius: 16px; background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(220, 38, 38, 0.5); color: white; font-size: 14px; font-weight: bold; margin-bottom: 32px; margin-left: auto; margin-right: auto; width: fit-content;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div id="status-icon" style="width: 20px; height: 20px; border: 3px solid rgba(220, 38, 38, 0.2); border-top: 3px solid #dc2626; border-radius: 50%;"></div>
-                    <span id="location-status" style="text-transform: uppercase; letter-spacing: 1px; font-size: 12px;">Sincronizando GPS...</span>
-                </div>
-                <div id="weather-report" style="border-left: 1px solid #334155; padding-left: 16px; color: #dc2626; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; font-weight: 900;">
-                    Aguardando...
-                </div>
-            </div>
+    <div id="pix-dropdown" class="pix-box">
+        <p style="text-align: center; font-weight: bold; color: #dc2626; margin-bottom: 10px;">DOAÇÃO PIX</p>
+        <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
+            <p style="font-size: 10px; color: #64748b;">CHAVE CELULAR:</p>
+            <p id="pix-key" style="font-family: monospace; font-weight: bold;">16999792460</p>
+        </div>
+        <button onclick="copyPix()" id="copy-btn" class="btn-red" style="width: 100%; padding: 8px;">COPIAR CHAVE</button>
+    </div>
 
-            <h1 style="font-size: clamp(40px, 8vw, 80px); font-weight: bold; margin: 0 0 24px 0; letter-spacing: -2px; text-transform: uppercase;">
-                CONTROLE <span style="color: #dc2626;">NEXUS</span>
-            </h1>
-            <p style="font-size: clamp(16px, 4vw, 24px); color: #cbd5e1; margin-bottom: 40px; line-height: 1.6;">
-                Monitoramento <span style="color: white; font-weight: bold;">REAL</span> ativo. <br>Exclusivamente baseado na sua posição atual.
-            </p>
-            <div>
-                <a href="#mapa" style="display: inline-block; text-decoration: none; padding: 20px 40px; background: #dc2626; color: white; border-radius: 12px; font-weight: bold; font-size: 18px; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.3);">
-                    Abrir Painel Radar
-                </a>
-            </div>
+    <section class="hero">
+        <div id="status-bar">
+            <div id="status-spinner" class="spinner"></div>
+            <span id="status-text">AGUARDANDO GPS...</span>
+            <div id="weather-tag" style="padding-left: 15px; border-left: 1px solid #334155; font-weight: 900; color: #dc2626;">---</div>
+        </div>
+
+        <h1>CONTROLE <span style="color: #dc2626;">NEXUS</span></h1>
+        <p style="max-width: 600px; color: #94a3b8; font-size: 20px; margin-bottom: 30px;">
+            Vigilância meteorológica severa em tempo real. Dados precisos baseados na sua localização atual.
+        </p>
+        <a href="#mapa" class="btn-red">ACESSAR RADAR</a>
+    </section>
+
+    <div style="background: #dc2626; padding: 20px; text-align: center; font-weight: bold; font-style: italic; text-transform: uppercase;">
+        Franca, SP - Base Operacional de Caça às Tempestades
+    </div>
+
+    <section id="historia" style="padding: 80px 20px; text-align: center; background: #020617;">
+        <h2 style="color: #dc2626; margin-bottom: 30px; text-transform: uppercase;">Nossa História</h2>
+        <p style="max-width: 800px; margin: 0 auto; font-size: 18px; color: #cbd5e1;">
+            A Equipe Nexus nasceu de um propósito único: proteger vidas através da tecnologia. Fundada por especialistas apaixonados por meteorologia severa, nossa missão é ser a linha de frente contra o caos climático. Atuamos de forma totalmente voluntária, utilizando sistemas de radar avançados para monitorar tempestades, rajadas de vento e tornados em tempo real. Acreditamos que a informação salva e, por isso, dedicamos nossos dias para alertar comunidades sobre perigos iminentes. Nossa história é escrita com precisão, coragem e o desejo incansável de ajudar o próximo.
+        </p>
+    </section>
+
+    <section id="mapa" class="radar-section">
+        <h2 style="text-align: center; margin-bottom: 30px;">RADAR TÁTICO <span style="color: #dc2626;">AO VIVO</span></h2>
+        <div class="radar-container">
+            <iframe id="main-radar" src="https://www.rainviewer.com/map.html?loc=0,0,3&type=radar&o=100&c=7&p=1&s=1&v=1&d=1&g=1&u=0"></iframe>
         </div>
     </section>
 
-    <!-- Operação Franca -->
-    <section style="padding: 48px 0; background: #dc2626; color: white; overflow: hidden;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 24px;">
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <i class="fas fa-wind" style="font-size: 36px;"></i>
-                <div>
-                    <h2 style="font-size: 24px; font-weight: bold; font-style: italic; text-transform: uppercase; margin: 0;">Franca, SP</h2>
-                    <p style="font-size: 12px; text-transform: uppercase; font-weight: 900; opacity: 0.8; margin: 0;">Base de Caça Operacional</p>
-                </div>
-            </div>
-            <div style="border-left: 1px solid rgba(255, 255, 255, 0.3); padding-left: 24px;">
-                <p style="font-size: 14px; font-weight: bold; text-transform: uppercase; margin: 0;">Status: <span style="background: black; padding: 2px 8px;">Monitoramento Ativo</span></p>
-            </div>
-        </div>
-    </section>
-
-    <!-- História da Nexus -->
-    <section id="historia" style="padding: 96px 0; background: #020617; border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b;">
-        <div style="max-width: 800px; margin: 0 auto; padding: 0 20px; text-align: center;">
-            <h2 style="font-size: 30px; font-weight: bold; margin-bottom: 32px; text-transform: uppercase; letter-spacing: 2px; color: #dc2626; font-style: italic;">Nossa História</h2>
-            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); padding: 40px; border-radius: 30px; border: 1px solid rgba(220, 38, 38, 0.2); position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; width: 8px; height: 100%; background: #dc2626;"></div>
-                <p style="font-size: 18px; color: #e2e8f0; line-height: 1.8; font-weight: 500; margin: 0;">
-                    A Equipe Nexus nasceu de um propósito único: proteger vidas através da tecnologia. Fundada por especialistas apaixonados por meteorologia severa, nossa missão é ser a linha de frente contra o caos climático. Atuamos de forma totalmente voluntária, utilizando sistemas de radar avançados para monitorar tempestades, rajadas de vento e tornados em tempo real. Acreditamos que a informação salva e, por isso, dedicamos nossos dias para alertar comunidades sobre perigos iminentes. Nossa história é escrita com precisão, coragem e o desejo incansável de ajudar o próximo.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Radar -->
-    <section id="mapa" style="padding: 96px 0; background: #0f172a;">
-        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-            <div style="text-align: center; margin-bottom: 48px;">
-                <h2 style="font-size: 30px; font-weight: bold; text-transform: uppercase; letter-spacing: -1px; margin: 0;">Radar Tático <span style="color: #dc2626;">Nexus</span></h2>
-                <p style="color: #94a3b8; font-style: italic; margin: 8px 0 0 0;">Sincronizado via coordenadas terrestres.</p>
-            </div>
-
-            <div style="background: rgba(30, 41, 59, 0.4); padding: 8px; border-radius: 20px; border: 1px solid rgba(220, 38, 38, 0.3);">
-                <div style="position: relative; width: 100%; height: 600px; overflow: hidden; border-radius: 16px; background: #020617;">
-                    <iframe 
-                        id="weather-map"
-                        src="https://www.rainviewer.com/map.html?loc=0,0,3&type=radar&o=100&c=7&p=1&s=1&v=1&d=1&g=1&u=0" 
-                        style="width: 100%; height: 100%; border: 0;"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer style="background: #020617; padding: 64px 0; border-top: 1px solid #1e293b; text-align: center;">
-        <span style="font-weight: bold; color: #dc2626; font-size: 36px; letter-spacing: -2px;">EQUIPE NEXUS</span>
-        <p style="color: #475569; font-size: 10px; margin-top: 32px; text-transform: uppercase; letter-spacing: 5px;">Cobertura Total • Dados Atmosféricos Reais</p>
+    <footer>
+        <h2 style="color: #dc2626; letter-spacing: -1px;">EQUIPE NEXUS</h2>
+        <p style="font-size: 12px; color: #475569; margin-top: 20px; letter-spacing: 3px;">MONITORAMENTO MUNDIAL ATIVO</p>
     </footer>
 
     <script>
-     
-        async function activateRealMonitoring() {
+        function togglePix() {
+            const drop = document.getElementById('pix-dropdown');
+            drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function copyPix() {
+            const key = "16999792460";
+            const el = document.createElement('textarea');
+            el.value = key;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            const btn = document.getElementById('copy-btn');
+            btn.innerText = "COPIADO!";
+            btn.style.background = "#22c55e";
+            setTimeout(() => {
+                btn.innerText = "COPIAR CHAVE";
+                btn.style.background = "#dc2626";
+            }, 2000);
+        }
+
+        async function startNexus() {
             const modal = document.getElementById('permission-modal');
-            const modalText = document.getElementById('modal-text');
-            const modalActions = document.getElementById('modal-actions');
-            const statusIcon = document.getElementById('status-icon');
-            const statusLabel = document.getElementById('location-status');
-            const statusBar = document.getElementById('status-bar');
-            const report = document.getElementById('weather-report');
-            const mapFrame = document.getElementById('weather-map');
+            const status = document.getElementById('status-bar');
+            const statusText = document.getElementById('status-text');
+            const spinner = document.getElementById('status-spinner');
+            const weatherTag = document.getElementById('weather-tag');
+            const radar = document.getElementById('main-radar');
 
             if (!navigator.geolocation) {
-                modalText.innerText = "Erro: O seu dispositivo não suporta Geolocalização.";
-                modalActions.innerHTML = `<button onclick="location.reload()" style="width: 100%; background: #334155; color: white; border: none; font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer;">RECARREGAR SITE</button>`;
+                alert("Erro: GPS não suportado.");
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
                     modal.style.display = 'none';
-                    statusBar.style.display = 'flex';
-                    const { latitude, longitude } = pos.coords;
-                    updateWeather(latitude, longitude);
+                    status.style.display = 'flex';
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+
+                    statusText.innerText = `SISTEMA SINCRONIZADO: ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                    spinner.style.animation = 'none';
+                    spinner.style.borderColor = "#22c55e";
+                    
+                    radar.src = `https://www.rainviewer.com/map.html?loc=${lat},${lon},10&type=radar&o=100&c=7&p=1&s=1&v=1&d=1&g=1&u=0`;
+
+                    try {
+                        weatherTag.innerText = "ANALISANDO...";
+                        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=rain,wind_speed_10m`);
+                        const data = await res.json();
+                        
+                        if (data.current.rain > 0) {
+                            weatherTag.innerText = "CHUVA DETECTADA";
+                            weatherTag.style.color = "#60a5fa";
+                        } else if (data.current.wind_speed_10m > 50) {
+                            weatherTag.innerText = "VENTO SEVERO";
+                            weatherTag.style.color = "#f59e0b";
+                        } else {
+                            weatherTag.innerText = "SEM RISCO IMINENTE";
+                            weatherTag.style.color = "#22c55e";
+                        }
+                    } catch (e) {
+                        weatherTag.innerText = "ERRO DE DADOS";
+                    }
                 },
                 (err) => {
-                    modal.style.display = 'flex';
-                    modalText.innerHTML = `<span style="color: #ef4444; font-weight: bold;">ERRO DE GPS:</span> O acesso foi recusado ou falhou. Por favor, recarregue a página e permita a localização.`;
-                    modalActions.innerHTML = `<button onclick="location.reload()" style="width: 100%; background: #dc2626; color: white; border: none; font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.3);">RECARREGAR AGORA</button>`;
-                    
-                    statusBar.style.display = 'flex';
-                    statusLabel.innerText = "ERRO: GPS BLOQUEADO";
-                    statusIcon.style.animation = 'none';
-                    statusIcon.className = "fas fa-times-circle";
-                    statusIcon.style.color = "#dc2626";
-                    statusIcon.style.border = "none";
-                    report.innerHTML = "RECARRREGUE O SITE PARA CONTINUAR";
+                    document.getElementById('modal-btn-area').innerHTML = `
+                        <p style="color:#ef4444; margin-bottom:15px; font-weight:bold;">ERRO: ACESSO AO GPS NEGADO.</p>
+                        <button onclick="location.reload()" class="btn-red" style="width:100%">RECARREGAR SITE</button>
+                    `;
                 },
-                { enableHighAccuracy: true, timeout: 8000 }
+                { timeout: 10000, enableHighAccuracy: true }
             );
-
-            async function updateWeather(lat, lon) {
-                mapFrame.src = `https://www.rainviewer.com/map.html?loc=${lat},${lon},10&type=radar&o=100&c=7&p=1&s=1&v=1&d=1&g=1&u=0`;
-                statusLabel.innerText = `GPS ATIVO: ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
-                statusIcon.style.animation = 'none';
-                statusIcon.className = "fas fa-check-circle";
-                statusIcon.style.color = "#22c55e";
-                statusIcon.style.border = "none";
-
-                try {
-                    report.innerText = "Consultando Radar Real...";
-                    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=rain,showers,wind_speed_10m&timezone=auto`);
-                    const data = await response.json();
-                    
-                    const isRaining = data.current.rain > 0 || data.current.showers > 0;
-                    const windSpeed = data.current.wind_speed_10m;
-
-                    if (windSpeed > 60) {
-                        report.innerHTML = "<i class='fas fa-biohazard'></i> ALERTA: RISCO DE VENTO SEVERO";
-                        report.style.color = "#ef4444";
-                    } else if (isRaining) {
-                        report.innerHTML = "<i class='fas fa-cloud-showers-heavy'></i> ALERTA: PRECIPITAÇÃO DETECTADA";
-                        report.style.color = "#60a5fa";
-                    } else {
-                        report.innerHTML = "<i class='fas fa-shield-halved'></i> SISTEMA OK: SEM CHUVA NO MOMENTO";
-                        report.style.color = "#22c55e";
-                    }
-                } catch (err) {
-                    report.innerText = "ERRO NA API. RECARREGUE O SITE.";
-                }
-            }
         }
-
-    
-        function toggleDonate() {
-            const dropdown = document.getElementById('donate-dropdown');
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function copyPix() {
-            const pix = "16999792460";
-            const textArea = document.createElement("textarea");
-            textArea.value = pix;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            
-            const btn = document.getElementById('btn-copy');
-            const originalText = btn.innerText;
-            btn.innerText = "COPIADO!";
-            btn.style.background = "#16a34a";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "#dc2626";
-            }, 2000);
-        }
-
-      
-        window.onclick = function(event) {
-            if (!event.target.closest('#donate-dropdown') && !event.target.closest('button')) {
-                document.getElementById('donate-dropdown').style.display = 'none';
-            }
-        }
-
-  
-        const spinner = document.getElementById('status-icon');
-        let rotation = 0;
-        setInterval(() => {
-            if (spinner.className.includes('loading-spinner') || spinner.id === 'status-icon' && !spinner.className.includes('fas')) {
-                rotation += 10;
-                spinner.style.transform = `rotate(${rotation}deg)`;
-            }
-        }, 30);
     </script>
 </body>
 </html>
