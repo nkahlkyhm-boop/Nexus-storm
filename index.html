@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EQUIPE NEXUS</title>
+    <title>EQUIPE NEXUS | Advanced Storm Intelligence System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter e JetBrains Mono para o console -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -17,7 +17,9 @@
             --bg-elevated: #1e293b;
             --accent-red: #dc2626;
             --accent-red-glow: rgba(220, 38, 38, 0.5);
+            --accent-purple: #9333ea; /* Novo para alertas extremos (Tornado) */
             --accent-orange: #f97316;
+            --accent-yellow: #eab308;
             --accent-green: #22c55e;
             --accent-blue: #3b82f6;
             --text-primary: #f8fafc;
@@ -55,10 +57,16 @@
             100% { transform: translateY(100%); }
         }
 
-        @keyframes pulse-red {
+        @keyframes pulse-alert {
             0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
             70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
             100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        
+        @keyframes pulse-extreme {
+            0% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4); border-color: var(--accent-purple); }
+            50% { box-shadow: 0 0 30px 10px rgba(147, 51, 234, 0.2); border-color: #fff; }
+            100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4); border-color: var(--accent-purple); }
         }
 
         @keyframes blink {
@@ -433,7 +441,7 @@
             <!-- Grid de Telemetria -->
             <div class="telemetry-grid">
                 <div class="sensor-card">
-                    <span class="sensor-label">Vento Real</span>
+                    <span class="sensor-label">Vento (Rajada)</span>
                     <span class="sensor-value" id="val-wind">--</span><span class="sensor-unit">km/h</span>
                 </div>
                 <div class="sensor-card">
@@ -445,8 +453,8 @@
                     <span class="sensor-value" id="val-temp">--</span><span class="sensor-unit">°C</span>
                 </div>
                 <div class="sensor-card">
-                    <span class="sensor-label">Humidade</span>
-                    <span class="sensor-value" id="val-hum">--</span><span class="sensor-unit">%</span>
+                    <span class="sensor-label">Código WMO</span>
+                    <span class="sensor-value" id="val-code">--</span><span class="sensor-unit">RAW</span>
                 </div>
                 <div class="sensor-card">
                     <span class="sensor-label">Status Global</span>
@@ -626,97 +634,114 @@
             );
         }
 
-        // BUSCA DE DADOS METEOROLÓGICOS E LÓGICA DE CORES
+        // BUSCA DE DADOS METEOROLÓGICOS E LÓGICA DE CORES AVANÇADA
         async function fetchWeatherData(lat, lon) {
-            logToConsole("REQUISITANDO TELEMETRIA OPEN-METEO...");
+            logToConsole("REQUISITANDO TELEMETRIA OPEN-METEO WMO CODES...");
             
             try {
-                const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,rain,showers,wind_speed_10m`);
+                // Adicionamos 'weather_code' e 'wind_gusts_10m' para maior precisão
+                const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,rain,showers,wind_speed_10m,wind_gusts_10m,weather_code&timezone=auto`);
                 const data = await response.json();
                 const cur = data.current;
 
                 // Atualiza Sensores
                 document.getElementById('val-temp').innerText = cur.temperature_2m;
-                document.getElementById('val-wind').innerText = cur.wind_speed_10m;
-                document.getElementById('val-rain').innerText = (cur.rain + cur.showers).toFixed(1);
-                document.getElementById('val-hum').innerText = cur.relative_humidity_2m;
+                // Usamos Rajada (gusts) se disponível, pois é mais importante para tempestades
+                const windDisplay = cur.wind_gusts_10m || cur.wind_speed_10m;
+                document.getElementById('val-wind').innerText = windDisplay;
+                
+                const rainTotal = (cur.rain + cur.showers).toFixed(1);
+                document.getElementById('val-rain').innerText = rainTotal;
+                document.getElementById('val-code').innerText = cur.weather_code; // Mostra o código WMO bruto
                 document.getElementById('val-loc').innerText = `${lat.toFixed(2)} | ${lon.toFixed(2)}`;
 
-                const rainTotal = cur.rain + cur.showers;
-                const windSpeed = cur.wind_speed_10m;
+                logToConsole(`DADOS WMO: CODE ${cur.weather_code}, GUSTS ${windDisplay}km/h`);
 
-                logToConsole(`DADOS RECEBIDOS: T:${cur.temperature_2m}°C, V:${windSpeed}km/h, C:${rainTotal}mm`);
-
-                // LÓGICA DE ESTADO TÁTICO (CORES)
+                // ELEMENTOS DE UI
                 const alertBar = document.getElementById('alert-master');
                 const masterDot = document.getElementById('master-dot');
                 const masterText = document.getElementById('master-text');
                 const weatherIcon = document.getElementById('weather-icon-dynamic');
                 const valGlobal = document.getElementById('val-global');
 
-                if (windSpeed > 50 || rainTotal > 10) {
-                    // ESTADO VERMELHO: TEMPESTADE SEVERA
-                    logToConsole("ALERTA VERMELHO: CONDIÇÕES DE TEMPESTADE SEVERA", "err");
-                    alertBar.style.borderColor = "var(--accent-red)";
-                    alertBar.style.background = "rgba(220, 38, 38, 0.1)";
-                    masterDot.style.background = "var(--accent-red)";
-                    masterDot.style.boxShadow = "0 0 15px var(--accent-red)";
-                    masterText.innerText = "ALERTA: TEMPESTADE EMINENTE";
-                    masterText.style.color = "var(--accent-red)";
-                    weatherIcon.innerHTML = '<i class="fas fa-bolt" style="color:var(--accent-red); animation: blink 0.5s infinite"></i>';
-                    valGlobal.innerText = "SEVERE";
-                    valGlobal.style.color = "var(--accent-red)";
-                    alertBar.style.animation = "pulse-red 2s infinite";
-                } 
-                else if (rainTotal > 0.1) {
-                    // ESTADO LARANJA: CHUVA
-                    logToConsole("AVISO LARANJA: PRECIPITAÇÃO DETECTADA");
-                    alertBar.style.borderColor = "var(--accent-orange)";
-                    alertBar.style.background = "rgba(249, 115, 22, 0.05)";
-                    masterDot.style.background = "var(--accent-orange)";
-                    masterDot.style.boxShadow = "0 0 15px var(--accent-orange)";
-                    masterText.innerText = "AVISO: CHUVA EM CURSO";
-                    masterText.style.color = "var(--accent-orange)";
-                    weatherIcon.innerHTML = '<i class="fas fa-cloud-showers-heavy" style="color:var(--accent-orange)"></i>';
-                    valGlobal.innerText = "RAIN";
-                    valGlobal.style.color = "var(--accent-orange)";
-                } 
+                // LÓGICA DE DECISÃO COMPLEXA (Baseada em WMO e Vento)
+                const code = cur.weather_code;
+                const wind = windDisplay;
+
+                // RESET DE ESTILOS
+                alertBar.style.animation = "none";
+                alertBar.className = "alert-bar"; // Reset classes
+
+                // 1. CONDIÇÃO EXTREMA: RISCO DE TORNADO / VENDAVAL DESTRUTIVO
+                // Código de Tempestade com Granizo (96, 99) ou Tempestade (95) + Ventos > 90km/h
+                if ((code === 96 || code === 99 || code === 95) && wind > 90) {
+                    setAlertState("EXTREME", "ALERTA MÁXIMO: RISCO DE TORNADO / VENDAVAL", "var(--accent-purple)", "fa-biohazard", true);
+                }
+                // 2. TEMPESTADE ELÉTRICA / GRANIZO
+                else if (code === 95 || code === 96 || code === 99) {
+                    setAlertState("STORM", "ALERTA: TEMPESTADE ELÉTRICA ATIVA", "var(--accent-red)", "fa-bolt", true);
+                }
+                // 3. CHUVA FORTE / PANCADAS VIOLENTAS
+                else if (code === 63 || code === 65 || code === 81 || code === 82 || wind > 60) {
+                    setAlertState("HEAVY RAIN", "ALERTA: CHUVA INTENSA / VENTOS FORTES", "var(--accent-orange)", "fa-cloud-showers-heavy", false);
+                }
+                // 4. CHUVA MODERADA / CONTÍNUA
+                else if (code === 61 || code === 80 || rainTotal > 0.5) {
+                    setAlertState("RAIN", "AVISO: CHUVA EM CURSO", "var(--accent-yellow)", "fa-cloud-rain", false);
+                }
+                // 5. GAROA / NEBLINA
+                else if ((code >= 51 && code <= 55) || code === 45 || code === 48) {
+                    setAlertState("DRIZZLE", "MONITORAMENTO: GAROA / NEBLINA", "var(--accent-blue)", "fa-smog", false);
+                }
+                // 6. CÉU LIMPO / NUBLADO (Sem risco)
                 else {
-                    // ESTADO VERDE: ESTÁVEL
-                    logToConsole("ESTADO VERDE: CONDIÇÕES ATMOSFÉRICAS ESTÁVEIS");
-                    alertBar.style.borderColor = "var(--accent-green)";
-                    masterDot.style.background = "var(--accent-green)";
-                    masterDot.style.boxShadow = "0 0 15px var(--accent-green)";
-                    masterText.innerText = "SISTEMA: CÉU LIMPO / ESTÁVEL";
-                    masterText.style.color = "var(--accent-green)";
-                    weatherIcon.innerHTML = '<i class="fas fa-sun" style="color:var(--accent-green)"></i>';
-                    valGlobal.innerText = "STABLE";
-                    valGlobal.style.color = "var(--accent-green)";
+                    setAlertState("STABLE", "SISTEMA OPERANTE: CÉU ESTÁVEL", "var(--accent-green)", "fa-sun", false);
                 }
 
-                logToConsole("MONITORAMENTO EM LOOP ATIVO [60s Refresh]");
+                logToConsole("LOOP DE VIGILÂNCIA ATIVO [30s Refresh]");
+
+                function setAlertState(status, text, color, iconClass, pulse) {
+                    alertBar.style.borderColor = color;
+                    alertBar.style.boxShadow = `inset 0 0 20px ${color}20`; // Hex opacity
+                    masterDot.style.background = color;
+                    masterDot.style.boxShadow = `0 0 15px ${color}`;
+                    masterText.innerText = text;
+                    masterText.style.color = color;
+                    weatherIcon.innerHTML = `<i class="fas ${iconClass}" style="color:${color}; font-size: 24px;"></i>`;
+                    valGlobal.innerText = status;
+                    valGlobal.style.color = color;
+
+                    if (pulse) {
+                        if (status === "EXTREME") {
+                            alertBar.style.animation = "pulse-extreme 1.5s infinite";
+                        } else {
+                            alertBar.style.animation = "pulse-alert 2s infinite";
+                        }
+                    }
+                }
 
             } catch (err) {
-                logToConsole("ERRO CRÍTICO AO BUSCAR TELEMETRIA", "err");
+                logToConsole("ERRO CRÍTICO AO INTERPRETAR DADOS WMO", "err");
+                console.error(err);
             }
         }
 
-        // SIMULAÇÃO DE LOGS ALEATÓRIOS PARA ENCHER O CONSOLE
+        // SIMULAÇÃO DE LOGS ALEATÓRIOS
         setInterval(() => {
             const randomMsgs = [
                 "Pingando Satélite GOES-16...",
-                "Varredura Doppler concluída.",
-                "Sincronizando dados de umidade relativa.",
-                "Analisando gradiente de pressão local.",
-                "Nenhum mesociclone detectado no raio de 50km.",
+                "Analisando WMO Weather Codes...",
+                "Verificando cisalhamento de vento...",
+                "Monitorando atividade elétrica local...",
+                "Nenhum mesociclone detectado no momento.",
                 "Checando base de dados da NOAA...",
                 "Subsistema térmico operando normalmente.",
-                "Ajustando ganho de sinal do radar."
+                "Cálculo de ponto de orvalho em andamento."
             ];
             if (document.getElementById('status-engine').style.display === 'flex') {
                 logToConsole(randomMsgs[Math.floor(Math.random() * randomMsgs.length)]);
             }
-        }, 8000);
+        }, 6000);
 
     </script>
 </body>
